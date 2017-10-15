@@ -8549,11 +8549,16 @@ function refreshStats() {
     			console.error(error);
     		}
     	});
+
+    	if (i < addresses.length - 1)
+    		setTimeout(updateRow, 50, i+1);
     }
 
-    for (var i = 0; i < addresses.length; i++) {
-    	updateRow(i);
-    }
+    updateRow(0);
+
+    //for (var i = 0; i < addresses.length; i++) {
+    //	updateRow(i);
+    //}
 
     /*console.log(1);
 
