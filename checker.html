@@ -1,11 +1,12 @@
 <button onclick="refreshStats();">REFRESH</button>
+<table id='tbl'></table>
 
 <script>
 function refreshStats() {
 	var addresses = [
 "0x0001e8621906F36E6a045d526969bE6475ad0924",
 "0x0003438eF581BF1e576E218C413B77A95F8c7E0B",
-/*"0x000779F69bf39d4DF8f007275CF3f90a9A07Adc1",
+"0x000779F69bf39d4DF8f007275CF3f90a9A07Adc1",
 "0x000a2f2128b8b032bf0042754c9aB5fa8e9B4586",
 "0x000A6D64eB61744Ca00a3dA5CDA0CDFa4E42e31a",
 "0x000bEc82C41837d974899b26B26F9cc8890Af9Ea",
@@ -8484,17 +8485,25 @@ function refreshStats() {
 "0xFFd80769daF2c792Ec714d2423A8eE42Bc411e00",
 "0xFfDF26FFb76d455AbdE756A539510b174e963Aa4",
 "0xfFe9735EceE5A3b9D043c09D4D2c5EE1dF08473b",
-"0xFfeA7546dfB63dd47B3F38EBec7EbC0FE160C340",*/
+"0xFfeA7546dfB63dd47B3F38EBec7EbC0FE160C340",
 "0xfFEc529b9D6DBd017B6D3812f8CABd9bBDeF5333",
 "0xfff3a92258829400dC4416b9f71b63fc61466044"
 	]
 	console.log(web3);
 	console.log(addresses.length);
+
 	let len = addresses.length;
 	let m10address = "0xe701cd3329057aea9d54300ddd05e41b8d74727a";
 	let m10abi = [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"initialSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}];
 
 	let m10 = web3.eth.contract(m10abi).at(m10address);
+	/*
+	m10.balanceOf("0x0001e8621906f36e6a045d526969be6475ad0924", function(error, result) {
+		if(!error)
+			console.log(result.toNumber());
+		else
+			console.error(error);
+	});*/
 	/*
 	m10.totalSupply(function(error, result) {
     if(!error) {
@@ -8505,46 +8514,57 @@ function refreshStats() {
         console.error(error);
 	});
 	*/
-	var myTable = "<table style='font-family: monospace;'><tr><td style='width: 100px;'>index</td>";
+	var myTable = "<table id='tbl' style='font-family: monospace;'><tr><td style='width: 100px;'>index</td>";
     myTable += "<td style='width: 100px; text-align: right;'>address</td>";
     myTable += "<td style='width: 100px; text-align: right;'>balance</td></tr>";
 
     function appendRow(i) {
     	var address = addresses[i];
     	var balance = 0;
-    	var cbFinished = 0;
-    	m10.balanceOf(address, function(e,r) {
-    		cbFinished = 1;
-    		if (!e) {
-    			balance = r.toNumber();
-    		} else {
-    			console.log(e);
-    		}
-    	});
-    	function doIt(i, address, balance) {
-    		if (cbFinished == 1) {
-		    	myTable += 	"<tr><td style='width: 100px; text-align: right;'>" + i + "(" + Math.floor(i/150) + ")"
-		    	          + "</td><td style='width: 100px; text-align: right;'>" + address 
-		    	          + "</td><td style='width: 100px; text-align: right;'>" + balance + "</td></tr>";
-    		} else {
-    			setTimeout(doIt, 1, i, address, balance);
-    		}
-    	}
-    	doIt(i, address, balance);
-    	//if (i != addresses.length - 1) {
-    	//	appendRow(i+1);
-    	//}
+
+    	myTable += 	"<tr><td style='width: 100px; text-align: right;'>" + i + "(" + Math.floor(i/150) + ")"
+    	          + "</td><td style='width: 100px; text-align: right;'>" + address 
+    	          + "</td><td style='width: 100px; text-align: right;'>" + balance + "</td></tr>";
     }
+
     for (var i = 0; i < addresses.length; i++) {
     	appendRow(i);
     }
+
     myTable+="</table>";
-    document.write(myTable);
+    document.getElementById("tbl").outerHTML = myTable;
+
+    function updateRow(i) {
+    	console.log(i, addresses[i]);
+    	var balance = 0;
+    	m10.balanceOf(addresses[i], function(error, result) {
+    		console.log("CALLBACK", i);
+    		if(!error) {
+    			b = result.toNumber();
+    			h = b == 0 ? "<font color='red'>0</font>" : b; 
+    			document.getElementById('tbl').rows[i+1].cells[2].innerHTML = h;
+    			//console.log(result.toNumber());
+    		}
+    		else {
+    			console.error(error);
+    		}
+    	});
+    }
+
+    for (var i = 0; i < addresses.length; i++) {
+    	updateRow(i);
+    }
+
+    /*console.log(1);
+
+
 	m10.balanceOf("0x0001e8621906f36e6a045d526969be6475ad0924", function(error, result) {
     if(!error)
         console.log(result.toNumber());
     else
         console.error(error);
 	});
+	console.log(2);*/
+
 }
 </script>
