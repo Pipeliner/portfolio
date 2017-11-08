@@ -1,0 +1,87 @@
+<!--<style> table.status {   width: 100px;   float: right; } </style>-->
+<style> td { width: 1000px; }</style>
+
+<table id='tbl' class="status">
+	<tr><td id="address">
+		Your address:
+	</td></tr>
+	<tr><td id="sourceBalance">
+		Your 10MTI balance:
+	</td></tr>
+	<tr><td id="approve">
+		<!--Calling approve()-->
+	</td></tr>
+	<tr><td id="convert">
+		<!--Calling convert10MTI()-->
+	</td></tr>
+	<tr><td id="destBalance">
+		Your TPL balance:
+	</td></tr>
+</table>
+
+<button onclick="convert();">Convert</button>
+
+<script>
+
+var user;
+var sourceBalance, destBalance, approved;
+
+let m10taddress = "0x9742fa8cb51d294c8267ddfead8582e16f18e421"; //mainnet
+let m10tabi = [{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"who","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}];
+
+let m10 = web3.eth.contract(m10tabi).at(m10taddress);
+
+
+let tplAddress = "0x8866d52303e372c2a2936d8ea09afd87bcbd8cf2"; //mainnet
+let tplAbi = [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"initialSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"manager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"convert10MTI","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"sourceTokens","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}];
+
+let tpl = web3.eth.contract(tplAbi).at(tplAddress);
+
+var calledConvert10MTI = false;
+
+window.onload = function() {
+	function updateStatus() {
+		user = web3.eth.accounts[0];
+		if (user !== undefined) {
+			document.getElementById('address').innerHTML = "Your Address: " + user;
+			m10.balanceOf(user, function(error, result) {
+				if (!error) {
+					sourceBalance = result;
+					document.getElementById('sourceBalance').innerHTML = "Your 10MTI balance: " +  result.toString();
+					if (sourceBalance.toString() == "0") {
+						document.getElementById('convert').innerHTML = 'Called convert10MTI() on TPL... Success!';
+					}
+				}
+			});
+
+			tpl.balanceOf(user, function(error, result) {
+				if (!error) {
+					destBalance = result;
+					document.getElementById('destBalance').innerHTML = "Your TPL balance: " +  result.toString();
+				}
+			});
+
+			m10.allowance(user, tplAddress, function(error, result) {
+				if (!error) {
+					//console.log("allowance/sourceBalance: ", result, sourceBalance, result.toString() == sourceBalance.toString());
+					if (result.toString() == sourceBalance.toString()) {
+						document.getElementById('approve').innerHTML = 'Called approve() on 10MTI... Success!';
+						if (!calledConvert10MTI){
+							calledConvert10MTI = true;
+							tpl.convert10MTI(function() {});
+							document.getElementById('convert').innerHTML = 'Called convert10MTI() on TPL...';
+						}
+					}
+				}
+			});
+		}
+	}
+
+	setInterval(updateStatus, 1000);
+};
+
+function convert() {
+	m10.approve(tplAddress, sourceBalance, function() {});
+	document.getElementById('approve').innerHTML = 'Called approve() on 10MTI...';
+}
+</script>
