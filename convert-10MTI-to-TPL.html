@@ -19,7 +19,7 @@
 	</td></tr>
 </table>
 
-<button onclick="convert();">Convert</button>
+<button id="converter" onclick="convert();">Convert</button>
 
 <script>
 
@@ -49,7 +49,10 @@ window.onload = function() {
 					sourceBalance = result;
 					document.getElementById('sourceBalance').innerHTML = "Your 10MTI balance: " +  result.toString();
 					if (sourceBalance.toString() == "0") {
-						document.getElementById('convert').innerHTML = 'Called convert10MTI() on TPL... Success!';
+						document.getElementById('converter').disabled = true;
+						if (calledConvert10MTI) {
+							document.getElementById('convert').innerHTML = 'Called convert10MTI() on TPL... Success!';
+						}
 					}
 				}
 			});
@@ -64,7 +67,7 @@ window.onload = function() {
 			m10.allowance(user, tplAddress, function(error, result) {
 				if (!error) {
 					//console.log("allowance/sourceBalance: ", result, sourceBalance, result.toString() == sourceBalance.toString());
-					if (result.toString() == sourceBalance.toString()) {
+					if ((result.toString() == sourceBalance.toString()) && sourceBalance.toString() != '0') {
 						document.getElementById('approve').innerHTML = 'Called approve() on 10MTI... Success!';
 						if (!calledConvert10MTI){
 							calledConvert10MTI = true;
