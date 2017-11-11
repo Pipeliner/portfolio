@@ -1,7 +1,7 @@
 <style>
-	table {
-		border-spacing: 20px 0;
-	}
+    table {
+        border-spacing: 20px 0;
+    }
 </style>
 
 <p id = "status"> connecting to Metamask... </p>
@@ -39,77 +39,79 @@ var addressesChecked = 0;
 var tableShown = false;
 
 window.onload = function() {
-	function updateStatus() {
-		var newUser = web3.eth.accounts[0];
-		if (user !== newUser) {
-			document.getElementById("status").innerHTML = "Connected; collected list of the token holders...";
-			user = newUser;
-			m10.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {m10Transfers = data; got_m10Transfers = true;}});
-			tpl.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {tplTransfers = data; got_tplTransfers = true;}});
-		}
+    function updateStatus() {
+        var newUser = web3.eth.accounts[0];
+        if (user !== newUser) {
+            document.getElementById("status").innerHTML = "Connected; collected list of the token holders...";
+            user = newUser;
+            m10.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {m10Transfers = data; got_m10Transfers = true;}});
+            tpl.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {tplTransfers = data; got_tplTransfers = true;}});
+        }
 
-		if (!calculated && got_m10Transfers && got_tplTransfers) {
-			document.getElementById("status").innerHTML = "Collected list of TPL token holders; checking balances (this might take up to several minutes)...";
-			for (let transfer of m10Transfers) {
-				if (transfer.args.to == "0x0000000000000000000000000000000000000000") {
-					// these may be convert10MTI token-burns
-					addressesSet.add(transfer.args.from);
-				}
-			}
+        if (!calculated && got_m10Transfers && got_tplTransfers) {
+            document.getElementById("status").innerHTML = "Collected list of TPL token holders; checking balances (this might take up to several minutes)...";
+            for (let transfer of m10Transfers) {
+                if (transfer.args.to == "0x0000000000000000000000000000000000000000") {
+                    // these may be convert10MTI token-burns
+                    addressesSet.add(transfer.args.from);
+                }
+            }
 
-			for (let transfer of tplTransfers) {
-				addressesSet.add(transfer.args.to);
-			}
+            for (let transfer of tplTransfers) {
+                addressesSet.add(transfer.args.to);
+            }
 
-			addresses = Array.from(addressesSet);
-			calculated = true;
+            addresses = Array.from(addressesSet);
+            calculated = true;
 
-			function checkBalance(i) {
-		    	var balance = 0;
-		    	tpl.balanceOf(addresses[i], function(error, result) {
-		    		if(!error) {
-		    			balances[addresses[i]] = result.toNumber();
-		    			addressesChecked += 1;
-		    		}
-		    		else {
-		    			console.error(error);
-		    		}
-		    	});
+            function checkBalance(i) {
+                var balance = 0;
+                tpl.balanceOf(addresses[i], function(error, result) {
+                    if(!error) {
+                        balances[addresses[i]] = result.toNumber();
+                        addressesChecked += 1;
+                    }
+                    else {
+                        console.error(error);
+                    }
+                });
 
-				if (i < addresses.length - 1)
-    				setTimeout(checkBalance, 50, i+1);
-    		}
+                if (i < addresses.length - 1)
+                    setTimeout(checkBalance, 50, i+1);
+            }
 
-    		checkBalance(0);
-    	}
+            checkBalance(0);
+        }
 
-    	if (calculated && !tableShown && addressesChecked == addresses.length) {
-			document.getElementById("status").innerHTML = "done";
-    		addresses.sort((a, b) => balances[b] - balances[a]);
+        if (calculated && !tableShown && addressesChecked == addresses.length) {
+            document.getElementById("status").innerHTML = "done";
+            addresses.sort((a, b) => balances[b] - balances[a]);
 
-			var myTable = "<table id='tbl' style='font-family: monospace;'><tr>";
-		    myTable += "<td style='width: 100px; text-align: center;'>address</td>";
-		    myTable += "<td style='width: 100px; text-align: center;'>balance</td></tr>";
+            var myTable = "<table id='tbl' style='font-family: monospace;'><tr>";
+            myTable += "<td style='text-align: center;'>rating</td>";
+            myTable += "<td style='width: 100px; text-align: center;'>address</td>";
+            myTable += "<td style='width: 100px; text-align: center;'>balance</td></tr>";
 
-		    function appendRow(i) {
-		    	var address = addresses[i];
-		    	var balance = balances[address] / 1e10;
+            function appendRow(i) {
+                var address = addresses[i];
+                var balance = (balances[address] / 1e10).toFixed(10).replace(/\.?0*$/,'');;
 
-		    	myTable += "</td><td style='width: 150px; text-align: right;'>" + address 
-		    	         + "</td><td style='width: 100px; text-align: left;'>" + balance + "</td></tr>";
-		    }
+                myTable += "</td><td style='width: 40px; text-align: right;'>" + (i+1)
+                         + "</td><td style='width: 150px; text-align: right;'>" + address
+                         + "</td><td style='width: 100px; text-align: left;'>" + balance + "</td></tr>";
+            }
 
-		    for (var i = 0; i < addresses.length; i++) {
-		    	appendRow(i);
-		    }
+            for (var i = 0; i < addresses.length; i++) {
+                appendRow(i);
+            }
 
-		    myTable+="</table>";
-		    document.getElementById("tbl").outerHTML = myTable;
+            myTable+="</table>";
+            document.getElementById("tbl").outerHTML = myTable;
 
-    		tableShown = true;
-    	}
-	}
+            tableShown = true;
+        }
+    }
 
-	setInterval(updateStatus, 1000);
+    setInterval(updateStatus, 1000);
 };
 </script>
