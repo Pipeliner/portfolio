@@ -9,7 +9,7 @@
     }
 </style>
 
-<p id = "status"> connecting to Metamask... </p>
+<p id = "status"> connecting to Metamask... (if you see this message for more than 5 seconds, unlock your Metamask vault) </p>
 <table id='tbl'></table>
 
 <script>
@@ -64,14 +64,12 @@ window.onload = function() {
         if (!connected && typeof user !== 'undefined') {
             connected = true;
             document.getElementById("status").innerHTML = "Connected; collecting list of the token holders...";
-            alert(1);
             m10.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {m10Transfers = data; got_m10Transfers = true;}});
             tpl.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {tplTransfers = data; got_tplTransfers = true;}});
         }
 
         if (!calculated && got_m10Transfers && got_tplTransfers) {
             document.getElementById("status").innerHTML = "Collected list of TPL token holders; checking balances (this might take up to several minutes)...";
-            alert(2);
             for (let transfer of m10Transfers) {
                 if (transfer.args.to == "0x0000000000000000000000000000000000000000") {
                     // these may be convert10MTI token-burns
@@ -107,7 +105,6 @@ window.onload = function() {
 
         if (calculated && !tableShown && addressesChecked == addresses.length) {
             document.getElementById("status").innerHTML = "done";
-            alert(3);
             addresses.sort((a, b) => balances[b] - balances[a]);
 
             var myTable = "<table id='tbl' style='font-family: monospace;'><tr>";
