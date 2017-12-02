@@ -1,13 +1,29 @@
+<head> <title>TPL balance rating</title> 
+<script src="web3.min.js"></script>
+<script src="web3-provider-engine/dist/ZeroClientProvider.js"></script>
+<script src="web3-provider-engine/dist/ProviderEngine.js"></script>
+</head>
 <style>
     table {
         border-spacing: 20px 0;
     }
 </style>
 
-<p id = "status"> connecting to Metamask... </p>
+<p id = "status"> connecting to Metamask... (if you see this message for more than 5 seconds, unlock your Metamask vault) </p>
 <table id='tbl'></table>
 
 <script>
+
+var user = undefined;
+
+if (typeof web3 === 'undefined') {
+    const engine = ZeroClientProvider({
+      getAccounts: function(){},
+      rpcUrl: 'https://mainnet.infura.io/tplchecker'
+    });
+    web3 = new Web3(engine);
+    user = "zero/myetherapi";
+}
 
 let m10taddress = "0x9742fa8cb51d294c8267ddfead8582e16f18e421"; //mainnet
 let m10tabi = [{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"who","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}];
@@ -22,13 +38,13 @@ let tpl = web3.eth.contract(tplAbi).at(tplAddress);
 
 var calledConvert10MTI = false;
 
-var user = undefined;
 var m10Transfers = [];
 var tplTransfers = [];
 
 let tplStartingBlock = 4514097;
 
 var got_m10Transfers = false, got_tplTransfers = false;
+var connected = false;
 var calculated = false;
 
 var addressesSet = new Set();
@@ -40,10 +56,14 @@ var tableShown = false;
 
 window.onload = function() {
     function updateStatus() {
-        var newUser = web3.eth.accounts[0];
-        if (user !== newUser) {
-            document.getElementById("status").innerHTML = "Connected; collected list of the token holders...";
-            user = newUser;
+        if (typeof user === 'undefined') {
+            user = web3.eth.accounts[0];
+            return;
+        }
+
+        if (!connected && typeof user !== 'undefined') {
+            connected = true;
+            document.getElementById("status").innerHTML = "Connected; collecting list of the token holders...";
             m10.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {m10Transfers = data; got_m10Transfers = true;}});
             tpl.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {tplTransfers = data; got_tplTransfers = true;}});
         }
