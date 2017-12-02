@@ -1,5 +1,7 @@
 <head> <title>TPL balance rating</title> 
 <script src="web3.min.js"></script>
+<script src="web3-provider-engine/dist/ZeroClientProvider.js"></script>
+<script src="web3-provider-engine/dist/ProviderEngine.js"></script>
 </head>
 <style>
     table {
@@ -15,8 +17,12 @@
 var user = undefined;
 
 if (typeof web3 === 'undefined') {
-    web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/tplchecker"));
-    user = "infura";
+    const engine = ZeroClientProvider({
+      getAccounts: function(){},
+      rpcUrl: 'https://mainnet.infura.io/tplchecker'
+    });
+    web3 = new Web3(engine);
+    user = "zero/myetherapi";
 }
 
 let m10taddress = "0x9742fa8cb51d294c8267ddfead8582e16f18e421"; //mainnet
@@ -38,6 +44,7 @@ var tplTransfers = [];
 let tplStartingBlock = 4514097;
 
 var got_m10Transfers = false, got_tplTransfers = false;
+var connected = false;
 var calculated = false;
 
 var addressesSet = new Set();
@@ -49,16 +56,22 @@ var tableShown = false;
 
 window.onload = function() {
     function updateStatus() {
-        var newUser = web3.eth.accounts[0];
-        if (user !== newUser) {
+        if (typeof user === 'undefined') {
+            user = web3.eth.accounts[0];
+            return;
+        }
+
+        if (!connected && typeof user !== 'undefined') {
+            connected = true;
             document.getElementById("status").innerHTML = "Connected; collecting list of the token holders...";
-            user = newUser;
+            alert(1);
             m10.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {m10Transfers = data; got_m10Transfers = true;}});
             tpl.Transfer({}, {fromBlock: tplStartingBlock}).get((err, data) => {if (!err) {tplTransfers = data; got_tplTransfers = true;}});
         }
 
         if (!calculated && got_m10Transfers && got_tplTransfers) {
             document.getElementById("status").innerHTML = "Collected list of TPL token holders; checking balances (this might take up to several minutes)...";
+            alert(2);
             for (let transfer of m10Transfers) {
                 if (transfer.args.to == "0x0000000000000000000000000000000000000000") {
                     // these may be convert10MTI token-burns
@@ -94,6 +107,7 @@ window.onload = function() {
 
         if (calculated && !tableShown && addressesChecked == addresses.length) {
             document.getElementById("status").innerHTML = "done";
+            alert(3);
             addresses.sort((a, b) => balances[b] - balances[a]);
 
             var myTable = "<table id='tbl' style='font-family: monospace;'><tr>";
