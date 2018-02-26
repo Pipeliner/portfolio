@@ -184,7 +184,7 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract RegistryToken is StandardToken {
   string public constant name = "Registry Token";
-  string public constant symbol = "OMT";
+  string public constant symbol = "RT";
   uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
@@ -195,13 +195,69 @@ contract RegistryToken is StandardToken {
   function RegistryToken() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
+    Transfer(0, msg.sender, INITIAL_SUPPLY);
   }
 
 }
 
 contract Registry {
-  RegistryToken token;
+  /**
+    1. Можно адресу назначить имя — строку
+    2. Могу узнать адрес по имени и наоборот
+    3. Могу узнать баланс по имени
+    4. Могу отправить токены по имени
+    5. Имя можно изменить, если не используется другим
+    */
+  RegistryToken public token;
+
+  // struct NameRecord {
+  //   string name;
+  //   address address;
+  //   address owner;
+  // }
+
+  /*
+    For a valid (name, address) record,
+    these conditions should both be true:
+    addressOf[name] = address
+    nameOf[addrss] = name
+
+    For unclaimed names,   addressOf[name] = UNCLAIMED
+    For unnamed addresses, nameOf[address] = ""
+  */
+  mapping (string => address) addressOf; /* can't be public as of solc 0.4.19 */
+  mapping (address => string) public nameOf;
+
+  address public constant UNCLAIMED = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
   function Registry() {
     token = new RegistryToken();
+  }
+
+  function claimName(string name) public {
+    address addr = msg.sender;
+    require(addressOf[name] == UNCLAIMED);
+
+    string oldName = nameOf[addr];
+    addressOf[oldName] = UNCLAIMED;
+
+    addressOf[name] = addr;
+    nameOf[addr] = name;
+  }
+
+  function getName(address addr) public returns (string) {
+    return nameOf[addr];
+  }
+
+  function getAddr(string name) public returns (address) {
+    return addressOf[name];
+  }
+
+  function balanceOf(string name) public returns (uint256) {
+    return token.balanceOf(getAddr(name));
+  }
+
+  function transfer(string to, uint256 value) public returns (bool) {
+    return token.transfer(getAddr(to), value);
   }
 }
