@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const Web3 = require("web3");
 const Tx = require('ethereumjs-tx')
 const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io"));
@@ -30,11 +31,10 @@ function sendEm(res) {
 		tx.sign(key);
 
 		var stx = tx.serialize();
-		web3.eth.sendSignedTransaction('0x' + stx.toString('hex'), (err, hash) => {
-		    if (err) { console.log(err); return; }
-		    console.log(hash);
-		    res.send('<a href="https://ropsten.etherscan.io/tx/' + hash + '">' + hash + '</a>');
-		});
+		web3.eth.sendSignedTransaction('0x' + stx.toString('hex'))
+			.on('transactionHash', console.log)
+			.on('receipt', (receipt) => res.send(receipt))
+			.on('error', (error) => res.send(error));
 	});
 }
 
