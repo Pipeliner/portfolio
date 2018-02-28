@@ -11,19 +11,23 @@ const tokenAddress = "0xd5c4210e6a53aeddcfaa1a81d621bb648e089340";
 
 const token = new web3.eth.Contract(tokenABI, tokenAddress);
 
+const registryABI = [{"constant":false,"inputs":[{"name":"to","type":"string"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"name","type":"string"}],"name":"claimName","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"getName","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"UNCLAIMED","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"}],"name":"getAddr","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"nameOf","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"token","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}];
+const registryAddress = "0x5A03350Bb9707d39D7527355Ba22e1AD812469d8";
+
+const registry = new web3.eth.Contract(registryABI, registryAddress);
+
 const gasPrice = web3.eth.gasPrice;
 const gasPriceHex = web3.utils.toHex(gasPrice);
 const gasLimitHex = web3.utils.toHex(3000000);
 
-
-function sendEm(res) {
+function replyWhenTxIsReady(res, txData, to) {
 	web3.eth.getTransactionCount(account).then(txCount => {
 		var tra = {
 		    gasPrice: web3.utils.toHex(10e9), // 10 Gwei
 		    gasLimit: gasLimitHex,
-		    data: token.methods.transfer("10b3a5d8551183a00f429d165d5f480139b93706", 2).encodeABI(),
+		    data: txData,
 		    from: account,
-		    to: tokenAddress,
+		    to: to,
 		    nonce: txCount
 		};
 
@@ -38,9 +42,21 @@ function sendEm(res) {
 	});
 }
 
+
+function sendYourself(res, value) {
+	txData = token.methods.transfer("10b3a5d8551183a00f429d165d5f480139b93706", value).encodeABI();
+	replyWhenTxIsReady(res, txData, tokenAddress);
+}
+
+function claimName(res, name) {
+	txData = registry.methods.claimName(name).encodeABI();
+	replyWhenTxIsReady(res, txData, registryAddress);
+}
+
 const express = require('express');
 const app = express();
 
-app.get('/', (req, res) => sendEm(res));
+app.get('/sendYourself/:value', (req, res) => sendYourself(res, req.params.value));
+app.get('/claimName/:name',     (req, res) => claimName(res, req.params.name));
 
 app.listen(3000, () => console.log('Name registry REST service is running at http://localhost:3000'));
