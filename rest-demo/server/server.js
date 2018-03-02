@@ -17,6 +17,10 @@ const gasPrice = web3.eth.gasPrice;
 const gasPriceHex = web3.utils.toHex(gasPrice);
 const gasLimitHex = web3.utils.toHex(3000000);
 
+const managerAddress = "10b3a5d8551183a00f429d165d5f480139b93706";
+const managerKey = new Buffer('635202ecb8337035982eb7d21269375f67652e51a9ac7f31e98e0006a1745fed', 'hex');
+const managerAccount = {address: managerAddress, key: managerKey};
+
 function replyWhenTxIsReady(res, account, txData, to) {
 	console.log(account);
 	web3.eth.getTransactionCount(account.address).then(txCount => {
@@ -48,6 +52,18 @@ function addressAndKey(req) {
 	};
 }
 
+/*
+  Sends some free tokens FOR TESTING PURPOSES
+*/
+function getTokens(res, address, value) {
+	txData = token.methods.transfer(address, value).encodeABI();
+	replyWhenTxIsReady(res, managerAccount, txData, tokenAddress);
+}
+
+function approveRegistry(res, account, value) {
+	txData = token.methods.approve(registryAddress, value).encodeABI();
+	replyWhenTxIsReady(res, account, txData, tokenAddress);
+}
 
 function sendYourself(res, account, value) {
 	txData = token.methods.transfer("10b3a5d8551183a00f429d165d5f480139b93706", value).encodeABI();
@@ -59,12 +75,46 @@ function claimName(res, account, name) {
 	replyWhenTxIsReady(res, account, txData, registryAddress);
 }
 
+function transfer(res, account, name, value) {
+	txData = registry.methods.transfer(name, value).encodeABI();
+	replyWhenTxIsReady(res, account, txData, registryAddress);
+}
+
+function getName(res, address) {
+	registry.methods.getName(address).call()
+		.then((name) => res.send(name));
+}
+
+function getAddr(res, name) {
+	registry.methods.getAddr(name).call()
+		.then((addr) => res.send(addr));
+}
+
+function balanceOf(res, name) {
+	registry.methods.balanceOf(name).call()
+		.then((addr) => res.send(addr));
+}
+
 const express = require('express');
 const app = express();
 app.use(express.urlencoded());
 
-
+app.post('/getTokens/:address/:value',    (req, res) => getTokens(res, req.params.address, req.params.value));
+app.post('/approveRegistry/:value',    (req, res) => approveRegistry(res, addressAndKey(req), req.params.value));
 app.post('/sendYourself/:value', (req, res) => sendYourself(res, addressAndKey(req), req.params.value));
 app.post('/claimName/:name',     (req, res) => claimName(res, addressAndKey(req), req.params.name));
+app.post('/transfer/:name/:value',     (req, res) => transfer(res, addressAndKey(req), req.params.name, req.params.value));
+app.post('/getName/:address',    (req, res) => getName(res, req.params.address));
+app.post('/getAddr/:name',       (req, res) => getAddr(res, req.params.name));
+app.post('/balanceOf/:name',     (req, res) => balanceOf(res, req.params.name));
+
+app.get('/getTokens/:address/:value',    (req, res) => getTokens(res, req.params.address, req.params.value));
+app.get('/approveRegistry/:value',    (req, res) => approveRegistry(res, addressAndKey(req), req.params.value));
+app.get('/sendYourself/:value', (req, res) => sendYourself(res, addressAndKey(req), req.params.value));
+app.get('/claimName/:name',     (req, res) => claimName(res, addressAndKey(req), req.params.name));
+app.get('/transfer/:name/:value',     (req, res) => transfer(res, addressAndKey(req), req.params.name, req.params.value));
+app.get('/getName/:address',    (req, res) => getName(res, req.params.address));
+app.get('/getAddr/:name',       (req, res) => getAddr(res, req.params.name));
+app.get('/balanceOf/:name',     (req, res) => balanceOf(res, req.params.name));
 
 app.listen(3000, () => console.log('Name registry REST service is running at http://localhost:3000'));
