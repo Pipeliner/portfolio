@@ -184,7 +184,7 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract RegistryToken is StandardToken {
   string public constant name = "Registry Token";
-  string public constant symbol = "RT";
+  string public constant symbol = "RT2";
   uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
@@ -232,6 +232,7 @@ contract Registry {
 
   function Registry() {
     token = new RegistryToken();
+    token.transfer(msg.sender, token.balanceOf(this));
   }
 
   function claimName(string name) public {
@@ -258,6 +259,6 @@ contract Registry {
   }
 
   function transfer(string to, uint256 value) public returns (bool) {
-    return token.transfer(getAddr(to), value);
+    return token.transferFrom(msg.sender, getAddr(to), value);
   }
 }
