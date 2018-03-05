@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu -o pipefail
-set -x
+#set -x
 
 SERVER="http://localhost:3000"
 
@@ -30,9 +30,37 @@ done
 test_name=TEST_$RANDOM
 curl $TEST_CREDS $SERVER/claimName/${test_name}
 curl -s $SERVER/getName/${TEST_ADDRESS} # check!
+echo
 curl -s $SERVER/getAddr/${test_name} # check!
+echo
 
 # from test account, we shouldn't be able to claim to claim $MANAGER_NAME
 curl $TEST_CREDS $SERVER/claimName/${MANAGER_NAME}
 curl -s $SERVER/getName/${TEST_ADDRESS} # check!
+echo
 curl -s $SERVER/getAddr/${test_name} # check!
+echo
+
+TOKEN_AMOUNT=10
+
+# now test balanceOf and transfer
+echo -n "initial manager balance: "
+curl -s $SERVER/balanceOf/${MANAGER_NAME}
+echo
+
+curl $SERVER/getTokens/$TEST_ADDRESS/$TOKEN_AMOUNT
+
+echo -n "After claiming tokens: "
+curl -s $SERVER/balanceOf/${MANAGER_NAME}
+echo
+
+curl $TEST_CREDS $SERVER/approveRegistry/0
+curl $TEST_CREDS $SERVER/approveRegistry/$TOKEN_AMOUNT
+
+curl $TEST_CREDS $SERVER/transfer/$MANAGER_NAME/$TOKEN_AMOUNT
+
+echo -n "After transfer($MANAGER_NAME, $TOKEN_AMOUNT): "
+curl -s $SERVER/balanceOf/${MANAGER_NAME}
+echo
+
+
